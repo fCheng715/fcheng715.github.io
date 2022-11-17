@@ -4,8 +4,8 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="Spring AOP源码分析, Chengfei&#39;s blog">
-    <meta name="description" content="SpringAOP则是Spring提供的一个标准易用的aop框架，依托Spring的IOC容器，提供了极强的AOP扩展增强能力">
+    <meta name="keywords" content="Spring循环依赖, Chengfei&#39;s blog">
+    <meta name="description" content="Spring 循环依赖​	在日常开发中，当两个以上的类互相引用时，就发生了循环依赖。Spring 中循环依赖产生的原因是因为获取一个 Bean 的流程全都是 getBean() 来获取的，这就导致为 Bean 赋值另一个引用时发生了闭环，而">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="renderer" content="webkit|ie-stand|ie-comp">
@@ -17,7 +17,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>Spring AOP源码分析 | Chengfei&#39;s blog</title>
+    <title>Spring循环依赖 | Chengfei&#39;s blog</title>
     <link rel="icon" type="image/png" href="/favicon.png">
     
 
@@ -203,12 +203,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/14.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/21.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">Spring AOP源码分析</h1>
+                    <h1 class="description center-align post-title">Spring循环依赖</h1>
                 </div>
             </div>
         </div>
@@ -236,12 +236,8 @@
                                 <span class="chip bg-color">Spring</span>
                             </a>
                         
-                            <a href="/tags/%E6%BA%90%E7%A0%81/">
-                                <span class="chip bg-color">源码</span>
-                            </a>
-                        
-                            <a href="/tags/Spring-AOP/">
-                                <span class="chip bg-color">Spring AOP</span>
+                            <a href="/tags/%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/">
+                                <span class="chip bg-color">循环依赖</span>
                             </a>
                         
                     </div>
@@ -256,7 +252,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2022-11-16
+                    2022-11-17
                 </div>
                 
 
@@ -280,70 +276,64 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h1 id="Spring-AOP"><a href="#Spring-AOP" class="headerlink" title="Spring AOP"></a>Spring AOP</h1><h2 id="1-AOP-的关键"><a href="#1-AOP-的关键" class="headerlink" title="1. AOP 的关键"></a>1. AOP 的关键</h2><ol>
-<li>我们通过注解 <code>@EnableAspectJAutoProxy</code> 开启自动代理</li>
-</ol>
-<pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token annotation punctuation">@EnableAspectJAutoProxy</span> <span class="token comment">// 开启自动代理</span>
-<span class="token annotation punctuation">@Configuration</span>
-<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">AopOpenConfig</span> <span class="token punctuation">&#123;</span>
-<span class="token punctuation">&#125;</span>
-<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+                <h1 id="Spring-循环依赖"><a href="#Spring-循环依赖" class="headerlink" title="Spring 循环依赖"></a>Spring 循环依赖</h1><p>​	在日常开发中，当两个以上的类互相引用时，就发生了循环依赖。Spring 中循环依赖产生的原因是因为获取一个 Bean 的流程全都是 <code>getBean()</code> 来获取的，这就导致为 Bean 赋值另一个引用时发生了闭环，而 Spring 使用三级缓存解决了循环依赖的问题。</p>
+<p>​	Spring 中所谓的三级缓存就是三个 <code>Map</code>，用于保存不同阶段的Bean信息。</p>
+<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117153855.png"></p>
+<h2 id="1-测试类准备"><a href="#1-测试类准备" class="headerlink" title="1. 测试类准备"></a>1. 测试类准备</h2><pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token annotation punctuation">@Component</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">B</span> <span class="token punctuation">&#123;</span>
+   <span class="token keyword">private</span> <span class="token class-name">A</span> a<span class="token punctuation">;</span>
+   <span class="token keyword">public</span> <span class="token class-name">B</span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+      <span class="token class-name">System</span><span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"B....构造..."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">&#125;</span>
+   <span class="token annotation punctuation">@Autowired</span>
+   <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">setA</span><span class="token punctuation">(</span><span class="token class-name">A</span> a<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>a <span class="token operator">=</span> a<span class="token punctuation">;</span>
+   <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
+<pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token annotation punctuation">@Component</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">A</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">private</span> <span class="token class-name">B</span> b<span class="token punctuation">;</span>
+	<span class="token keyword">public</span> <span class="token class-name">A</span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span>
+		<span class="token class-name">System</span><span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"A....构造..."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+	<span class="token annotation punctuation">@Autowired</span>
+	<span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">setA</span><span class="token punctuation">(</span><span class="token class-name">B</span> b<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">this</span><span class="token punctuation">.</span>b <span class="token operator">=</span> b<span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="2-追踪程序"><a href="#2-追踪程序" class="headerlink" title="2. 追踪程序"></a>2. 追踪程序</h2><ol>
+<li>首先会创建 A 的实例，来到 <code>getBean(&quot;a&quot;) -&gt; doGetbean() -&gt; getSingleton -&gt; createBean() -&gt;doCreateBean()</code>,进行 A 对象的创建。</li>
+</ol>
+<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117153439.png"></p>
+<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117154631.png"></p>
 <ol start="2">
-<li>而该注解中又引入了<code>AspectJAutoProxyRegistrar.class</code></li>
+<li>将创建的 A 半成品添加到 三级缓存中，三级对象中不保存对象本身，保存的是 <code>lambda表达式</code>，即暴露对象的过程，Spirng 也不知道什么时候需要暴露对象，所以需要暴露对象的时候只需要<code>执行 lambda</code>就可以了</li>
 </ol>
-<pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token annotation punctuation">@Target</span><span class="token punctuation">(</span><span class="token class-name">ElementType</span><span class="token punctuation">.</span><span class="token constant">TYPE</span><span class="token punctuation">)</span>
-<span class="token annotation punctuation">@Retention</span><span class="token punctuation">(</span><span class="token class-name">RetentionPolicy</span><span class="token punctuation">.</span><span class="token constant">RUNTIME</span><span class="token punctuation">)</span>
-<span class="token annotation punctuation">@Documented</span>
-<span class="token annotation punctuation">@Import</span><span class="token punctuation">(</span><span class="token class-name">AspectJAutoProxyRegistrar</span><span class="token punctuation">.</span><span class="token keyword">class</span><span class="token punctuation">)</span>
-<span class="token keyword">public</span> <span class="token annotation punctuation">@interface</span> <span class="token class-name">EnableAspectJAutoProxy</span> <span class="token punctuation">&#123;</span>
-   <span class="token keyword">boolean</span> <span class="token function">proxyTargetClass</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">default</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
-   <span class="token keyword">boolean</span> <span class="token function">exposeProxy</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">default</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
+<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117154802.png"></p>
+<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117155008.png"></p>
 <ol start="3">
-<li><code>AspectJAutoProxyRegistrar</code> 类中会给容器中添加一个 <code>AnnotationAwareAspectJAutoProxyCreator</code>，它是一个<code>后置处理器</code>，通过该后置处理器完成 AOP 功能。</li>
+<li>进入 A 对象的 赋值阶段 <code>populateBean()</code>，在此环节中 <code>AutowiredAnnotationBeanPostProcessor</code> 后置处理器参与工作，检测到 A 需要装配 B，继续 <code>getBean(&quot;b&quot;) -&gt; getSingleton(beanName) </code>检查缓存中不存在，继续创建 B 对象</li>
 </ol>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117102657.png"></p>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117102830.png"></p>
-<h2 id="2-切面如何获取到的？"><a href="#2-切面如何获取到的？" class="headerlink" title="2. 切面如何获取到的？"></a>2. 切面如何获取到的？</h2><ol>
-<li>Spring 的切面是在整个容器启动时就完全加载完毕的。</li>
-<li>切面的获取是在 <code>InitializationBean</code> 阶段，通过 <code>后置处理器（AnnotationAwareAspectJAutoProxyCreator）</code> 进行初始化之前的后置处理来完成的，判断当前组件是否需要创建代理对象也是在此判断的。</li>
+<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117160247.png"></p>
+<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117160213.png"></p>
+<ol start="4">
+<li><p>创建 B 的流程同上述 A，将 B对象放入三级缓存， 继续对 B 进行赋值，再次进行 <code>AutowiredAnnotationBeanPostProcessor后置处理器</code> 进行<code> getBean(&quot;a&quot;) -&gt; doGetBean(&quot;a&quot;)</code>直到进行 <code>getSingleton(beanName,true)</code> 缓存检查。</p>
+<p>依次检查<code> 一、二、三级缓存</code>，此时可以获取到之前 A 对象创建时保存在缓存中的 lambda，执行 lambda 暴露 A 半成品对象，并<code>添加 A 到二级缓存</code>，<code>移除三级缓存 A 的信息</code>，并<code>赋值给 B，此时 B 对象赋值结束</code></p>
+</li>
 </ol>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221111133453.png"></p>
-<ol start="3">
-<li>第一次进入该处理时，获取切面文件，在 <code>shouldSkip(Class&lt;?&gt; beanClass, String beanName)</code>中 调用 <code>findCandidateAdvisors();</code>，获取所有的组件，寻找我们全部的切面文件，组件名称添加到 <code>aspectBeanNames</code>，文件以及对应的切换以，key 为组件名称，value 为 其中全部的切面方法，进行缓存</li>
+<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117161848.png"></p>
+<ol start="5">
+<li><code>initializeBean</code> 初始化B,再次检查缓存，<code>getSingleton(beanName, false);</code>，检查一、二级缓存中是否存在 B，此时二级缓存中只有 A，直接返回为 null ，此时 B 对象创建完毕，将 <code>B 对象放入 一级缓存，清理二三级缓存</code></li>
 </ol>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221111133805.png"></p>
-<h2 id="3-代理对象的创建"><a href="#3-代理对象的创建" class="headerlink" title="3. 代理对象的创建"></a>3. 代理对象的创建</h2><p>​	被切入的组件需要AOP创建代理对象，从而执行回调增强。</p>
-<blockquote>
-<p>代理对象在哪里被创建了？</p>
-</blockquote>
-<p>​	代理对象在 Bean进行初始化后，通过 <code>AnnotationAwareAspectJAutoProxyCreator </code>后置处理器进行初始化后置处理返回了代理对象，并替换了原来的对象。</p>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117115420.png"></p>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117115557.png"></p>
-<h2 id="4-AOP-的执行"><a href="#4-AOP-的执行" class="headerlink" title="4. AOP 的执行"></a>4. AOP 的执行</h2><p>​	因为之前给切入类创建了代理对象并保存到了容器中，所以我们从容器中拿到的就是代理对象，该代理对象封装了目标对象、回调拦截信息（即增强器）等详细信息。</p>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117120201.png"></p>
-<blockquote>
-<p>执行</p>
-</blockquote>
-<ol>
-<li>首先会由 <code>DynamicAdvisedInterceptor </code>进行拦截，执行<code>Object intercept(Object proxy, Method method, Object[] args, MethodProxy methodProxy)</code></li>
-<li>获取拦截器链,通过 <code>getInterceptorsAndDynamicInterceptionAdvice()</code> 获取组件下增强器，并遍历转换为 <code>MethodInterceptor</code>，返回拦截器集合并排序，生成拦截器链。</li>
+<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117163533.png"></p>
+<ol start="5">
+<li>此时继续返回 A 的赋值操作，此时 B 对象为 <code>AutowiredAnnotationBeanPostProcessor自动装配的结果</code>，直接将 B 赋值给 A，完成 A 的赋值。</li>
+<li>初始化 A，再次检查缓存，<code>getSingleton(beanName, false);</code>，从二级缓存中获取到 A，此时的 A 对象已经是完成创建的状态，将 A 对象放入一级缓存，移除二、三级缓存</li>
+<li>此时执行的一串只是创建 A 所引发的，继续创建 B 对象，B 对象在一级缓存中存在，直接从 一级缓存中获取到B，A和B创建完毕</li>
 </ol>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117122017.png"></p>
-<ol start="3">
-<li>创建一个 <code>CglibMethodInvocation </code>执行 <code>proceed()</code>,调用 父类的模板方法。</li>
-</ol>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117121842.png"></p>
-<h2 id="5-回调通知"><a href="#5-回调通知" class="headerlink" title="5. 回调通知"></a>5. 回调通知</h2><h3 id="1-Before"><a href="#1-Before" class="headerlink" title="1. @Before"></a>1. @Before</h3><p>​	先直接执行增强器的前置通知方法，通过传入的 this 对象继续执行 proceed(); 右移索引继续调用。</p>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117122145.png"></p>
-<h3 id="2-After"><a href="#2-After" class="headerlink" title="2. @After"></a>2. @After</h3><p>​	先继续执行后续增强方法，当所有的方法执行完毕了，最后在 finally 块中执行后置通知。</p>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117122225.png"></p>
-<h3 id="3-AfterReturning"><a href="#3-AfterReturning" class="headerlink" title="3. @AfterReturning"></a>3. @AfterReturning</h3><p>​	先执行后续方法，拿到返回值之后，执行增强器的返回通知回调方法。</p>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117122306.png"></p>
-<h3 id="4-AfterThrowing"><a href="#4-AfterThrowing" class="headerlink" title="4. @AfterThrowing"></a>4. @AfterThrowing</h3><p>​	先执行后续方法，并 try catch 尝试捕获异常，那么就会执行 异常通知。</p>
-<p><img src="https://myimgplace.oss-cn-hangzhou.aliyuncs.com/note/img/20221117122408.png"></p>
 
                 
             </div>
@@ -370,7 +360,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="https://fcheng715.gitee.io/2022/11/16/Spring-AOP%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">https://fcheng715.gitee.io/2022/11/16/Spring-AOP%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</a>
+                    <a href="https://fcheng715.gitee.io/2022/11/17/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/">https://fcheng715.gitee.io/2022/11/17/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -412,12 +402,8 @@
                                     <span class="chip bg-color">Spring</span>
                                 </a>
                             
-                                <a href="/tags/%E6%BA%90%E7%A0%81/">
-                                    <span class="chip bg-color">源码</span>
-                                </a>
-                            
-                                <a href="/tags/Spring-AOP/">
-                                    <span class="chip bg-color">Spring AOP</span>
+                                <a href="/tags/%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/">
+                                    <span class="chip bg-color">循环依赖</span>
                                 </a>
                             
                         </div>
@@ -463,9 +449,10 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
                 <a href="/2022/11/17/Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96/">
                     <div class="card-image">
@@ -483,9 +470,9 @@
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2022-11-17
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2022-11-17
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-user fa-fw"></i>
@@ -494,6 +481,7 @@
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -513,7 +501,7 @@
         
         <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge right-badge text-color">
-                本篇&nbsp;<i class="far fa-dot-circle"></i>
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
                 <a href="/2022/11/16/Spring-AOP%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
@@ -543,7 +531,6 @@
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
